@@ -1,35 +1,52 @@
 import tkinter as tk
-from tkinter import N, W, E, S
+from tkinter import N, W, E, S, messagebox
 from tkinter import ttk
 import glob
 import server_conn_utils as s_utils
+import db_ops
 
-class HomeForm(ttk.Frame):
-    def __init__(self, parent):
-        super(HomeForm, self).__init__()
-        self.grid(column=0, row=0, sticky=(N, W, E, S))
+
+class TeliApp(tk.Tk):
+    def __init__(self, **kwargs):
+        super(TeliApp, self).__init__()
+
+        self.title('Telipinu')
+        self.home = HomeForm(self)
+        self.home.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
 
         data_dir = 'C:\\Users\\Rominus\\test_data\\'
         dir_dbs = glob.glob('{}*.db'.format(data_dir))
-        try:
-            if len(dir_dbs) == 1:
-                engine = s_utils.connect_extant(dir_dbs[0])
-            if len(dir_dbs) == 0:
-                s_utils.create_sqlite('{}\\telipinu_default.db'.format(data_dir))
-                engine = engine = s_utils.connect_extant('{}\\telipinu_default.db'.format(data_dir))
-        except Exception as e:
-            parent.lower()
-            err = ErrorBox(self, e, plus_txt= """
-                Database connection failed:
-                """
-                )
-            
 
+        if len(dir_dbs) == 1:
+            self.engine = s_utils.connect_extant(data_dir, dir_dbs[0])
+        if len(dir_dbs) == 0:
+            s_utils.create_sqlite(data_dir, 'telipinu_default.db')
+            self.engine = s_utils.connect_extant(data_dir, 'telipinu_default.db')
+        else:
+            self.engine = s_utils.connect_extant(data_dir, 'telipinu_default.db')
+        db_ops.check_core_tbls(self.engine)
+        
+    def report_callback_exception(self, exc, val, tb):
+        messagebox.showerror("Error", message=str(val))
+
+
+class HomeForm(ttk.Frame):
+    def __init__(self, parent, **kwargs):
+        super(HomeForm, self).__init__()
+        self.grid(column=0, row=0, sticky=(N, W, E, S))
+        self.configure(width=100, height=50)
+
+        data_dir = 'C:\\Users\\Rominus\\test_data\\'
+        dir_dbs = glob.glob('{}*.db'.format(data_dir))
+        
         self.person_list = ttk.Button(self, text='Open Person List')
         self.person_list.grid(column=0, row=0, sticky = (N,W,E,S))
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
-        for child in self.winfo_children(): child.grid_configure(padx=5, pady=5)
+        for child in self.winfo_children(): child.grid_configure(padx=200, pady=50)
+
 
 class ErrorBox(tk.Toplevel):
     def __init__(self, parent, my_error, plus_txt=None):
@@ -53,3 +70,8 @@ class ErrorBox(tk.Toplevel):
     def close_me(self):
         self.destroy()
         
+        
+if __name__ == '__main__':
+    app = TeliApp()
+    app.lift()
+    app.mainloop()

@@ -10,17 +10,12 @@ def import_from_dict(file_dict, sa_engine, tbl_action='replace'):
         records.to_sql('{}'.format(key), sa_engine, if_exists=tbl_action, index=False)
         print('file for {} done'.format(key))
 
-def create_sqlite(path):
+def create_sqlite(db_dir, db_fname):
     # TODO add error handling for non-existant dir and existing db file
-    engine = sa.create_engine('sqlite:///{}.db'.format(path))
+    engine = sa.create_engine('sqlite:///{}//{}'.format(db_dir, db_fname))
     Base = declarative_base()
     Base.metadata.create_all(engine)
 
-def connect_extant(path):
-    engine = sa.create_engine('sqlite:///{}.db'.format(path))
+def connect_extant(db_dir, db_fname):
+    engine = sa.create_engine('sqlite:///{}//{}'.format(db_dir, db_fname))
     return engine
-
-if __name__ == '__main__':
-    db_dir = 'C:\\Users\\Rominus\\repos\\telipinu'
-    db_fname = 'test'
-    create_sqlite(db_dir, db_fname)
